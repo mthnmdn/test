@@ -1,0 +1,13 @@
+---
+- name: Run id command on all hosts
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Show id output
+      ansible.builtin.command: id
+      register: id_result
+
+    - name: Print id output
+      ansible.builtin.debug:
+        var: id_result.stdout
