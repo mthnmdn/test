@@ -11,3 +11,23 @@
     - name: Print id output
       ansible.builtin.debug:
         var: id_result.stdout
+---
+# test-vars.yml
+- name: Test inventory variables
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Show basic info
+      debug:
+        msg: >
+          Host={{ inventory_hostname }}
+          Groups={{ group_names }}
+          cluster_env={{ cluster_env }}
+          common_label={{ common_label }}
+          ansible_user={{ ansible_user }}
+
+    - name: Show all host variables (optional, daha detaylı)
+      debug:
+        var: hostvars[inventory_hostname]
+      verbosity: 1
