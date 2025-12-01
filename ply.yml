@@ -1,0 +1,9 @@
+- name: Run external shell script on target servers
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Run script directly
+      script: myscript.sh
+      chdir: /tmp
