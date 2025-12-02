@@ -22,3 +22,6 @@
 - set_fact:
     control_plane_join: "{{ clean_stdout | regex_search('kubeadm join[^\\n]*--control-plane[^\\n]*') }}"
     worker_join: "{{ clean_stdout | regex_search('kubeadm join[^\\n]*(?!--control-plane)[^\\n]*') }}"
+
+- set_fact:
+    clean_stdout: "{{ init_out.stdout | regex_replace('\\\\\\n\\s*', ' ') }}"
