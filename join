@@ -19,26 +19,6 @@
       - "Worker join: {{ worker_join }}"
 
 
-- hosts: master1
-  tasks:
-
-    - name: Run kubeadm init
-      command: kubeadm init
-      register: init_out
-
-    - name: Extract control-plane join command
-      set_fact:
-        control_plane_join: >-
-          {{ init_out.stdout | regex_search('kubeadm join[\\s\\S]+?--control-plane[^\n]*') }}
-
-    - name: Extract worker join command
-      set_fact:
-        worker_join: "{{ init_out.stdout_lines
-                         | select('match', '^kubeadm join')
-                         | list
-                         | last }}"
-
-    - debug:
-        msg:
-          - "Control plane join: {{ control_plane_join }}"
-          - "Worker join: {{ worker_join }}"
+- set_fact:
+    control_plane_join: "{{ clean_stdout | regex_search('kubeadm join[^\\n]*--control-plane[^\\n]*') }}"
+    worker_join: "{{ clean_stdout | regex_search('kubeadm join[^\\n]*(?!--control-plane)[^\\n]*') }}"
