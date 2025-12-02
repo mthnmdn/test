@@ -25,3 +25,6 @@
 
 - set_fact:
     clean_stdout: "{{ init_out.stdout | regex_replace('\\\\\\n\\s*', ' ') }}"
+aaaaaaaaaaaaaa
+- set_fact:
+    clean_stdout: "{{ init_out.stdout | regex_replace('\\\\\\s*\\n\\s*', ' ') }}"
