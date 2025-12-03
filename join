@@ -38,3 +38,6 @@ aaaaaaaaaaaaaa
       ansible.builtin.shell: "kubeadm init phase upload-certs --upload-certs"
       register: certificate_key_output
       become: true
+
+certificate_key: "{{ certificate_key_output.stdout | regex_search('[a-f0-9]{64}') }}"
+
