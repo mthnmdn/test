@@ -1,0 +1,14 @@
+- name: Write kubelet config file
+  copy:
+    dest: /var/lib/kubelet/config.yaml
+    content: |
+      maxPods: 500
+      podPidsLimit: 16384
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Restart kubelet
+  systemd:
+    name: kubelet
+    state: restarted
