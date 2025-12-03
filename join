@@ -28,3 +28,13 @@
 aaaaaaaaaaaaaa
 - set_fact:
     clean_stdout: "{{ init_out.stdout | regex_replace('\\\\\\s*\\n\\s*', ' ') }}"
+
+
+    - name: generate join command
+      ansible.builtin.shell: "kubeadm token create --print-join-command"
+      register: join_command_output
+
+    - name: generate certificate key for use with join_command later
+      ansible.builtin.shell: "kubeadm init phase upload-certs --upload-certs"
+      register: certificate_key_output
+      become: true
