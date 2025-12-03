@@ -41,3 +41,7 @@ aaaaaaaaaaaaaa
 
 certificate_key: "{{ certificate_key_output.stdout | regex_search('[a-f0-9]{64}') }}"
 
+- name: extract certificate key
+  ansible.builtin.set_fact:
+    certificate_key: "{{ certificate_key_output.stdout | regex_search('[a-f0-9]{64}') }}"
+
