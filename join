@@ -1,3 +1,6 @@
+loop: "{{ groups['nodes'] | select(lambda x: hostvars[x].node_type == 'master') | list }}"
+
+
 - name: Get join command
   command: kubeadm token create --print-join-command
   register: join_cmd_raw
