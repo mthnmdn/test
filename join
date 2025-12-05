@@ -1,3 +1,5 @@
+# https://stackoverflow.com/questions/33896847/how-do-i-register-a-variable-and-persist-it-between-plays-targeted-on-different
+
 - name: "Cluster token"
   shell: kubeadm token list | cut -d ' ' -f1 | sed -n '2p'
   register: K8S_TOKEN
