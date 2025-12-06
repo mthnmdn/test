@@ -43,23 +43,3 @@ node01
       loop: "{{ groups['nodes'] }}"
       when: inventory_hostname == "controlplane"
 
-ENCRYPT/DECRYPT PLAY
----
-- name: Encrypt/Decrypt
-  hosts: all
-  gather_facts: true
-  become: true
-
-- name: Encrypt file
-  ansible.builtin.openssl_encrypt:
-    src: /root/admin.conf
-    dest: /root/admin-enc.conf
-    cipher: aes256
-    passphrase: "MyStrongPassword"
-
-- name: Decrypt file
-  ansible.builtin.openssl_decrypt:
-    src: /root/admin-enc.conf
-    dest: /root/admin-dec.conf
-    cipher: aes256
-    passphrase: "MyStrongPassword"
