@@ -1,7 +1,9 @@
 install ansible on ubuntu 
 ---
 $ sudo apt update -y && sudo apt install software-properties-common -y && sudo add-apt-repository --yes --update ppa:ansible/ansible && sudo apt install ansible -y
-
+--------------
+base64 -w0 admin.conf > admin-encoded.conf
+cat admin-encoded.conf | base64 -d > admin-decoded.conf
 
 [nodes]
 controlplane
@@ -40,3 +42,24 @@ node01
         kubectl label --kubeconfig /etc/kubernetes/admin.conf node {{ item }} {{ common_label }} --overwrite
       loop: "{{ groups['nodes'] }}"
       when: inventory_hostname == "controlplane"
+
+ENCRYPT/DECRYPT PLAY
+---
+- name: Encrypt/Decrypt
+  hosts: all
+  gather_facts: true
+  become: true
+
+- name: Encrypt file
+  ansible.builtin.openssl_encrypt:
+    src: /root/admin.conf
+    dest: /root/admin-enc.conf
+    cipher: aes256
+    passphrase: "MyStrongPassword"
+
+- name: Decrypt file
+  ansible.builtin.openssl_decrypt:
+    src: /root/admin-enc.conf
+    dest: /root/admin-dec.conf
+    cipher: aes256
+    passphrase: "MyStrongPassword"
