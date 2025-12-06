@@ -1,0 +1,42 @@
+install ansible on ubuntu 
+---
+$ sudo apt update -y && sudo apt install software-properties-common -y && sudo add-apt-repository --yes --update ppa:ansible/ansible && sudo apt install ansible -y
+
+
+[nodes]
+controlplane
+node01
+
+1- HATALI
+---
+- name: Label all nodes with common label
+  hosts: nodes 
+  gather_facts: false
+  become: true
+
+  vars:
+    common_label: "env=dev"
+
+  tasks:
+    - name: Add label to node
+      command: >
+        kubectl label --kubeconfig /etc/kubernetes/admin.conf node {{ items }} {{ common_label }} --overwrite -> "items" değil, "item" olmalı.
+      loop: "{{ groups['nodes'] }}"
+      when: inventory_hostname == controlplane -> BU GÖSTERİM controlplane isimli bir değişken arar ve böyle bir değişken bulunmadığı için hata alınır. "controlplane" yazılırsa string olarak değerlendirilir ve değişken aranmaz.
+
+1- DOĞRU
+---
+- name: Label all nodes with common label
+  hosts: all --> ansible'ın hangi sunuculara ssh yapacağını burası belirler, when direktifi değil. ansible buradaki sunuculara sıradan bağlanır ve when direktifindeki koşul gerçekleştiğinde task'ı çalıştırır.
+  gather_facts: true
+  become: true
+
+  vars:
+    common_label: "env=dev"
+
+  tasks:
+    - name: Add label to node
+      command: >
+        kubectl label --kubeconfig /etc/kubernetes/admin.conf node {{ item }} {{ common_label }} --overwrite
+      loop: "{{ groups['nodes'] }}"
+      when: inventory_hostname == "controlplane"
