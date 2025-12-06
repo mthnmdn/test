@@ -43,3 +43,37 @@ node01
       loop: "{{ groups['nodes'] }}"
       when: inventory_hostname == "controlplane"
 
+2- HATALI
+---
+
+- name: [TEST] # bu isimlendirmeye izin vermiyor.
+  hosts: all
+  gather_facts: true
+  become: true
+
+  vars:
+    common_labels: "env=dev" # play-level variable tanımları host bilgisi olarak değerlendirilmediği için hostvars değişkenine (dictionary) eklenmez. bu yüzden hostvars üzerinden çağrılamaz. bu değişken fact olarak tanımlanırsa (set_fact modülü) hostvars üzerinden çağrılabilir olur.
+
+  tasks:
+  - name: TEST
+    when: inventory_hostname == "controlplane"
+    # common_labels sunuculara ait değişken olmadığından hostvars sözlüğü ile çağrılamaz
+    shell: |
+      echo "{{ hostvars['controlplane']['common_labels'] }}" 
+
+2- DOĞRU
+---
+
+- name: TEST 
+  hosts: all
+  gather_facts: true
+  become: true
+
+  vars:
+    common_labels: "env=dev"
+
+  tasks:
+  - name: TEST
+    when: inventory_hostname == "controlplane"
+    shell: |
+      echo "{{ common_labels }}" 
