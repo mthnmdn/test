@@ -1,3 +1,10 @@
+- name: Append cluster c to resources (YAML-aware)
+  ansible.builtin.command: >
+    yq eval '.resources += ["./clusters/c"]'
+    -i /path/to/kustomization.yaml
+
+
+
 - set_fact:
     join_token: "{{ (join_cmd_raw.stdout | regex_findall('--token\\s+([^\\s]+)')) | first | default('') }}"
     discovery_hash: "{{ (join_cmd_raw.stdout | regex_findall('--discovery-token-ca-cert-hash\\s+sha256:([a-fA-F0-9]+)')) | first | default('') }}"
