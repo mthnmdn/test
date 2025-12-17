@@ -1,3 +1,11 @@
+- name: Add cluster c to kustomization resources
+  ansible.builtin.lineinfile:
+    path: /path/to/kustomization.yaml
+    line: "  - ./clusters/c"
+    insertafter: "^resources:"
+
+
+
 - name: Append cluster to resources (no duplicates)
   ansible.builtin.shell: |
     yq eval '.resources |= ( . + ["./clusters/{{ cluster_name }}"] | unique )' -i /path/to/kustomization.yaml
