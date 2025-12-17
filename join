@@ -1,3 +1,14 @@
+- name: Copy with permissions preserved
+  ansible.builtin.copy:
+    src: /tmp/a/
+    dest: /tmp/b/
+    remote_src: true
+    owner: root
+    group: root
+    mode: preserve
+
+
+
 - name: Add cluster c to kustomization resources
   ansible.builtin.lineinfile:
     path: /path/to/kustomization.yaml
