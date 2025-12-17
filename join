@@ -1,7 +1,9 @@
-- name: Append cluster c to resources (YAML-aware)
-  ansible.builtin.command: >
-    yq eval '.resources += ["./clusters/c"]'
-    -i /path/to/kustomization.yaml
+- name: Append cluster to resources (no duplicates)
+  ansible.builtin.shell: |
+    yq eval '.resources |= ( . + ["./clusters/{{ cluster_name }}"] | unique )' -i /path/to/kustomization.yaml
+  args:
+    executable: /bin/bash
+
 
 
 
