@@ -1,3 +1,11 @@
+- name: Replace <CLUSTER-NAME> with inventory cluster_name
+  ansible.builtin.replace:
+    path: /path/to/placement.yaml
+    regexp: '<CLUSTER-NAME>'
+    replace: "{{ cluster_name }}"
+
+
+
 - name: Copy with permissions preserved
   ansible.builtin.copy:
     src: /tmp/a/
