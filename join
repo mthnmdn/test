@@ -1,3 +1,16 @@
+- name: Copy file based on cluster_env from inventory
+  ansible.builtin.copy:
+    src: "{{ env_file_map[cluster_env] }}"
+    dest: /opt/target_file
+    mode: '0644'
+  vars:
+    env_file_map:
+      prod: /tmp/a
+      test: /tmp/b
+      dmz:  /tmp/c
+
+
+
 - name: Replace <CLUSTER-NAME> with inventory cluster_name
   ansible.builtin.replace:
     path: /path/to/placement.yaml
