@@ -1,3 +1,16 @@
+- name: Wait until managedcluster mg1 is available
+  command: kubectl get managedcluster mg1 -o name
+  register: mg1_check
+  changed_when: false
+  retries: 30
+  delay: 10
+  until: mg1_check.rc == 0
+
+- name: Ensure label a=b exists on managedcluster mg1
+  command: kubectl label managedcluster mg1 a=b --overwrite
+  register: label_result
+  changed_when: "'not labeled' not in label_result.stdout"
+
 - name: Copy file based on cluster_env from inventory
   ansible.builtin.copy:
     src: "{{ env_file_map[cluster_env] }}"
