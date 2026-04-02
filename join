@@ -1,3 +1,30 @@
+- name: Secret yaml içindeki cert ve key alanlarını güncelle
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: asd.crt dosyasını base64 encode et
+      ansible.builtin.shell: cat asd.crt | base64 -w0
+      register: crt_b64
+      changed_when: false
+
+    - name: asd-decr.key dosyasını base64 encode et
+      ansible.builtin.shell: cat asd-decr.key | base64 -w0
+      register: key_b64
+      changed_when: false
+
+    - name: secret.yaml içindeki alanları güncelle
+      ansible.builtin.replace:
+        path: /tmp/secret.yaml
+        regexp: "{{ item.regexp }}"
+        replace: "{{ item.replace }}"
+      loop:
+        - regexp: '(^\s*ca\.crt:\s*).*$'
+          replace: '\1{{ crt_b64.stdout }}'
+        - regexp: '(^\s*tls\.crt:\s*).*$'
+          replace: '\1{{ crt_b64.stdout }}'
+        - regexp: '(^\s*tls\.key:\s*).*$'
+          replace: '\1{{ key_b64.stdout }}'
+
 - name: Wait until managedcluster mg1 is available
   command: kubectl get managedcluster mg1 -o name
   register: mg1_check
