@@ -1,3 +1,16 @@
+- name: secret.yaml içindeki alanları tek tek güncelle
+  ansible.builtin.lineinfile:
+    path: /tmp/secret.yaml
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: '^\s*ca\.crt:\s*.*$'
+      line: '    ca.crt: {{ crt_b64.stdout }}'
+    - regexp: '^\s*tls\.crt:\s*.*$'
+      line: '    tls.crt: {{ crt_b64.stdout }}'
+    - regexp: '^\s*tls\.key:\s*.*$'
+      line: '    tls.key: {{ key_b64.stdout }}'
+
 - name: Secret yaml içindeki cert ve key alanlarını güncelle
   hosts: localhost
   gather_facts: false
