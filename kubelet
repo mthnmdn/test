@@ -1,24 +1,17 @@
-- name: Write kubelet config file
-  copy:
-    dest: /var/lib/kubelet/config.yaml
-    content: |
-      maxPods: 500
-      podPidsLimit: 16384
-    owner: root
-    group: root
-    mode: '0644'
+cat > helloworld.proto <<'EOF'
+syntax = "proto3";
 
-- name: Restart kubelet
-  systemd:
-    name: kubelet
-    state: restarted
+package helloworld;
 
-- name: add label to existing namespace
-  kubernetes.core.k8s:
-    state: patched
-    kind: Namespace
-    name: patch_namespace
-    definition:
-      metadata:
-        labels:
-          support: patch
+service Greeter {
+  rpc SayHello (HelloRequest) returns (HelloReply) {}
+}
+
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloReply {
+  string message = 1;
+}
+EOF
