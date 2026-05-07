@@ -1,46 +1,25 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/usr/bin/env python3
+import grpc
+import helloworld_pb2
+import helloworld_pb2_grpc
 
-require() { command -v "$1" >/dev/null 2>&1 || { echo "ERR: $1 yok"; exit 1; }; }
-require oc
-require jq
+def main():
+    target = "grpc-helloworld.grpc-demo.svc.cluster.local:50051"
 
-CONSOLE_URL="$(oc get consoles.config.openshift.io cluster -o jsonpath='{.status.consoleURL}' || true)"
-[ -n "${CONSOLE_URL:-}" ] || { echo "ERR: consoleURL boş"; exit 1; }
-CLUSTER="$(printf '%s' "$CONSOLE_URL" | sed -E 's|^https://console-openshift-console\.apps\.([^./]+).*|\1|')"
-[ -n "$CLUSTER" ] || { echo "ERR: cluster adı çıkarılamadı"; exit 1; }
+    # Tek channel = tek bağlantı havuzu / aynı HTTP/2 connection'ın yeniden kullanılması
+    channel = grpc.insecure_channel(target)
 
-echo "cluster,namespace,route,host,tlsTermination,service,pods"
+    # Stub'ı bir kez oluşturup tekrar kullanıyoruz
+    stub = helloworld_pb2_grpc.GreeterStub(channel)
 
-oc get ns -o json \
-| jq -r '.items[].metadata.name | select(test("^(kube|openshift)-|^default$")|not)' \
-| while IFS= read -r NS; do
-  ROUTES_JSON="$(mktemp)"
-  oc get route -n "$NS" -o json >"$ROUTES_JSON" 2>/dev/null || echo '{"items":[]}' >"$ROUTES_JSON"
+    try:
+        for name in ["Mete", "Emre", "Ali", "Veli"]:
+            response = stub.SayHello(
+                helloworld_pb2.HelloRequest(name=name)
+            )
+            print(response.message)
+    finally:
+        channel.close()
 
-  jq -r '
-    .items[]? as $r
-    | ($r.spec.host // "-") as $host
-    | ($r.spec.tls.termination // "none") as $term
-    | ( ([$r.spec.to] + ($r.spec.alternateBackends // []))
-        | map(select(. != null and (.kind // "Service") == "Service"))
-        | .[]? ) as $backend
-    | [$r.metadata.name, $host, $term, $backend.name]
-    | @tsv
-  ' "$ROUTES_JSON" \
-  | while IFS=$'\t' read -r ROUTE HOST TERM SVC; do
-      # Service selector'ını oku (yoksa pods="-")
-      SEL_JSON="$(oc get svc "$SVC" -n "$NS" -o json 2>/dev/null | jq -c '.spec.selector // {}')"
-      if [ "$SEL_JSON" = "null" ] || [ "$SEL_JSON" = "{}" ]; then
-        PODS_STR="-"
-      else
-        LABELS="$(printf '%s' "$SEL_JSON" | jq -r 'to_entries | map("\(.key)=\(.value)") | join(",")')"
-        PODS_STR="$(oc get pods -n "$NS" -l "$LABELS" -o json 2>/dev/null \
-                    | jq -r '[.items[].metadata.name] | if length==0 then "-" else join(";") end')"
-      fi
-      printf '%s,%s,%s,%s,%s,%s,%s\n' "$CLUSTER" "$NS" "$ROUTE" "$HOST" "$TERM" "$SVC" "$PODS_STR"
-    done
-
-  rm -f "$ROUTES_JSON"
-done
-
+if __name__ == "__main__":
+    main()
