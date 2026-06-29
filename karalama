@@ -1,0 +1,8 @@
+NS=grpc-test
+APP_LABEL="app=pygrpc"
+METHOD="greeter.Greeter/SayHello"
+
+for pod in $(oc get pod -n "$NS" -l "$APP_LABEL" -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'); do
+  count=$(oc logs -n "$NS" "$pod" -c istio-proxy --since=10m | grep -c "$METHOD")
+  echo "$pod: $count"
+done
