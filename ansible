@@ -1,33 +1,20 @@
----
-- name: Run id command on all hosts
-  hosts: all
-  gather_facts: false
-
-  tasks:
-    - name: Show id output
-      ansible.builtin.command: id
-      register: id_result
-
-    - name: Print id output
-      ansible.builtin.debug:
-        var: id_result.stdout
----
-# test-vars.yml
-- name: Test inventory variables
-  hosts: all
-  gather_facts: false
-
-  tasks:
-    - name: Show basic info
-      debug:
-        msg: >
-          Host={{ inventory_hostname }}
-          Groups={{ group_names }}
-          cluster_env={{ cluster_env }}
-          common_label={{ common_label }}
-          ansible_user={{ ansible_user }}
-
-    - name: Show all host variables (optional, daha detaylı)
-      debug:
-        var: hostvars[inventory_hostname]
-      verbosity: 1
+- name: Wait until all addons are available
+  vars:
+    addons:
+      - application-manager
+      - governance-policy-framework
+      - cluster-proxy
+  ansible.builtin.command:
+    cmd: >-
+      kubectl get managedclusteraddon {{ addon }}
+      -n asd
+      --kubeconfig /tmp/asd
+      -o jsonpath='{.status.conditions[?(@.type=="Available")].status}'
+  loop: "{{ addons }}"
+  loop_control:
+    loop_var: addon
+  register: addon_status
+  until: addon_status.stdout == "True"
+  retries: 30
+  delay: 10
+  changed_when: false
