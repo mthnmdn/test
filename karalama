@@ -12,3 +12,6 @@ done
 oc get pods --all-namespaces -o jsonpath='{range .items[*]}{range .spec.containers[*]}{$.metadata.namespace}{"\t"}{$.metadata.name}{"\t"}{.name}{"\t"}{.resources.requests.cpu}{"\n"}{end}{end}' \
 | awk -F'\t' '{c=$4; if(c ~ /m$/){sub(/m$/,"",c)} else if(c!=""){c=c*1000} print c"\t"$0}' \
 | sort -k1 -nr | cut -f2-
+
+
+oc get configmap user-ca-bundle -n openshift-config -o jsonpath='{.data.ca-bundle\.crt}' | awk -v cmd='openssl x509 -noout -subject -issuer' '/BEGIN/{close(cmd)};{print | cmd}'
