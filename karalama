@@ -15,3 +15,39 @@ oc get pods --all-namespaces -o jsonpath='{range .items[*]}{range .spec.containe
 
 
 oc get configmap user-ca-bundle -n openshift-config -o jsonpath='{.data.ca-bundle\.crt}' | awk -v cmd='openssl x509 -noout -subject -issuer' '/BEGIN/{close(cmd)};{print | cmd}'
+
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: system-namespace-resource-usage
+  namespace: openshift-monitoring
+  labels:
+    role: alert-rules
+spec:
+  groups:
+  - name: system-namespace-usage.rules
+    rules:
+    - alert: SystemPodHighCPUUsage
+      expr: |
+        sum by (namespace, pod) (
+          rate(container_cpu_usage_seconds_total{namespace=~"openshift-.*|kube-.*|default"}[5m])
+        ) > 0.8
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Yüksek CPU kullanımı: {{ $labels.namespace }}/{{ $labels.pod }}"
+        description: "{{ $labels.pod }} pod'u ({{ $labels.namespace }}) son 10 dakikadır 0.8 core üzerinde CPU kullanıyor. Mevcut: {{ $value | printf \"%.2f\" }} core."
+
+    - alert: SystemPodHighMemoryUsage
+      expr: |
+        sum by (namespace, pod) (
+          container_memory_working_set_bytes{namespace=~"openshift-.*|kube-.*|default", container!=""}
+        ) > 2 * 1024 * 1024 * 1024
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Yüksek memory kullanımı: {{ $labels.namespace }}/{{ $labels.pod }}"
+        description: "{{ $labels.pod }} pod'u ({{ $labels.namespace }}) 2Gi üzerinde memory kullanıyor. Mevcut: {{ $value | humanize1024 }}B."
