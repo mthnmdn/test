@@ -55,3 +55,71 @@ spec:
 ---
 
 oc get prometheusrule -A -o json | jq -r '.items[].spec.groups[].rules[] | select(.record=="pod:container_cpu_usage:sum") | .expr'
+
+---
+
+- name: Apply node labels and taints
+  hosts: master[0]
+  become: true
+  gather_facts: false
+  vars_files:
+    - "../vars/default-variables.yaml"
+  tasks:
+
+    - name: Label and taint infra and worker nodes
+      block:
+
+        # Worker olup olmadığını burada tek seferde belirliyoruz.
+        # physical_workers ve virtual_workers gruplarının ikisi de boşsa
+        # cluster "worker'sız" kurulmuş demektir; bu durumda infra taint'lenmez.
+        - name: Determine whether any worker nodes exist
+          ansible.builtin.set_fact:
+            has_worker_nodes: "{{ (groups['physical_workers'] | default([]) | length) > 0
+                                  or (groups['virtual_workers'] | default([]) | length) > 0 }}"
+
+        - name: Label Infra Nodes
+          ansible.builtin.command: kubectl label no {{ item }} {{ infra_labels }} --kubeconfig {{ kubeconfig_path }} --overwrite
+          loop: "{{ groups['infra'] | default([]) }}"
+          register: label_infra
+          until: label_infra.rc == 0
+          retries: 5
+          delay: 5
+          changed_when: "'not labeled' not in label_infra.stdout"
+
+        - name: Taint Infra Nodes
+          ansible.builtin.command: kubectl taint no {{ item }} {{ infra_taints }} --kubeconfig {{ kubeconfig_path }} --overwrite
+          loop: "{{ groups['infra'] | default([]) }}"
+          register: taint_infra
+          until: taint_infra.rc == 0
+          retries: 5
+          delay: 5
+          changed_when: "'not tainted' not in taint_infra.stdout"
+          # Worker yoksa infra taint'lemeyi tamamen atla; pod'lar infra'lara yerleşebilsin.
+          when: has_worker_nodes | bool
+
+        - name: Label Physical Worker Nodes
+          ansible.builtin.command: kubectl label no {{ item }} {{ physical_worker_labels }} --kubeconfig {{ kubeconfig_path }} --overwrite
+          loop: "{{ groups['physical_workers'] | default([]) }}"
+          register: label_physical
+          until: label_physical.rc == 0
+          retries: 5
+          delay: 5
+          changed_when: "'not labeled' not in label_physical.stdout"
+
+        - name: Label Virtual Worker Nodes
+          ansible.builtin.command: kubectl label no {{ item }} {{ virtual_worker_labels }} --kubeconfig {{ kubeconfig_path }} --overwrite
+          loop: "{{ groups['virtual_workers'] | default([]) }}"
+          register: label_virtual
+          until: label_virtual.rc == 0
+          retries: 5
+          delay: 5
+          changed_when: "'not labeled' not in label_virtual.stdout"
+
+        # kube-system ns label!!!!
+        - name: Label kube-system Namespace
+          ansible.builtin.command: kubectl label ns kube-system monitoring=kube-prometheus-stack --kubeconfig {{ kubeconfig_path }} --overwrite
+          register: label_ns
+          until: label_ns.rc == 0
+          retries: 5
+          delay: 5
+          changed_when: "'not labeled' not in label_ns.stdout"
