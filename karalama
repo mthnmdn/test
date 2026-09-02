@@ -51,3 +51,7 @@ spec:
       annotations:
         summary: "Yüksek memory kullanımı: {{ $labels.namespace }}/{{ $labels.pod }}"
         description: "{{ $labels.pod }} pod'u ({{ $labels.namespace }}) 2Gi üzerinde memory kullanıyor. Mevcut: {{ $value | humanize1024 }}B."
+
+---
+
+oc get prometheusrule -A -o json | jq -r '.items[].spec.groups[].rules[] | select(.record=="pod:container_cpu_usage:sum") | .expr'
