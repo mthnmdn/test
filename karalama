@@ -72,3 +72,21 @@ annotations:
   summary: "Pod {{ $labels.pod }} yüksek CPU kullanıyor ({{ $labels.namespace }})"
   description: "{{ $labels.namespace }}/{{ $labels.pod }} pod'u 5 dakikadır 10 core üzerinde CPU kullanıyor. Güncel kullanım: {{ $value | humanize }} core"
   description: "{{ $labels.namespace }}/{{ $labels.pod }} pod'u 5 dakikadır 100 GiB üzerinde memory kullanıyor. Güncel kullanım: {{ $value | humanize1024 }}B"
+
+---
+
+oc -n openshift-monitoring get secret alertmanager-main --template='{{ index .data "alertmanager.yaml" | base64decode }}' > alertmanager.yaml
+
+oc -n openshift-monitoring set data secret/alertmanager-main --from-file=alertmanager.yaml=alertmanager.yaml
+
+---
+
+route:
+  receiver: 'email-receiver'
+  group_by: ['namespace', 'pod']
+  repeat_interval: 4h          # genel varsayılan
+  routes:
+    - matchers:
+        - alertname =~ "Yüksek(Memory|CPU)Kullanımı"
+      receiver: 'email-receiver'
+      repeat_interval: 1h      # bu alarmlar için daha sık
