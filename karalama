@@ -104,3 +104,7 @@ policies:
           name: high-pod-resource-usage
           annotations:
             policy.open-cluster-management.io/disable-templates: "true"
+
+---
+
+while read -r cluster; do [ -z "$cluster" ] && continue; oc label managedcluster "$cluster" my-label=my-value --overwrite; done < clusters.txt
