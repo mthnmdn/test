@@ -90,3 +90,17 @@ route:
         - alertname =~ "Yüksek(Memory|CPU)Kullanımı"
       receiver: 'email-receiver'
       repeat_interval: 1h      # bu alarmlar için daha sık
+
+---
+
+policies:
+  - name: high-pod-resource-usage
+    manifests:
+      - path: high-pod-resource-usage.yaml
+    patches:
+      - apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: high-pod-resource-usage
+          annotations:
+            policy.open-cluster-management.io/disable-templates: "true"
